@@ -1,4 +1,14 @@
-# JFXAI4OBS — Financial Engineering & Loan Management Building-Block Architecture
+<p align="center">
+  <a href="./financial-engineering-showcase.jpg">
+    <img
+      src="./financial-engineering-showcase.jpg"
+      alt="JFXAI4OBS — Financial Engineering and Loan Management: open banking, payments, financial simulation, and AI-assisted risk and forecasting."
+      width="100%"
+    />
+  </a>
+</p>
+
+# Financial Engineering & Loan Management Building-Block Architecture
 
 > Modular reference architecture for an open financial platform centered on **Loan Management**, **Open Banking**, **Payments**, **Financial Engineering**, and **AI-assisted risk/forecasting**, using the original open-source software compendium as a set of replaceable building blocks.
 
