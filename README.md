@@ -12,6 +12,48 @@
 
 > Modular reference architecture for an open financial platform centered on **Loan Management**, **Open Banking**, **Payments**, **Financial Engineering**, and **AI-assisted risk/forecasting**, using the original open-source software compendium as a set of replaceable building blocks.
 
+## Table of Contents
+
+- [1. Architectural Direction](#1-architectural-direction)
+- [2. Building-Block Map](#2-building-block-map)
+- [3. Building Block A — Experience & Financial Desktop](#3-building-block-a--experience--financial-desktop)
+- [4. Building Block B — Identity, Consent & Trust](#4-building-block-b--identity-consent--trust)
+- [5. Building Block C — Loan Origination & Loan Management Core](#5-building-block-c--loan-origination--loan-management-core)
+- [6. Building Block D — Open Banking](#6-building-block-d--open-banking)
+- [7. Building Block E — Payments & Settlement](#7-building-block-e--payments--settlement)
+- [8. Building Block F — Financial Engineering Engine](#8-building-block-f--financial-engineering-engine)
+- [9. Building Block G — AI Financial Decision Engine](#9-building-block-g--ai-financial-decision-engine)
+- [10. Building Block H — Financial Semantic & Industry Standards](#10-building-block-h--financial-semantic--industry-standards)
+- [11. Building Block I — Workflow & Data Preparation](#11-building-block-i--workflow--data-preparation)
+- [12. Building Block J — Enterprise Architecture & Governance](#12-building-block-j--enterprise-architecture--governance)
+- [13. Building Block K — Digital Assets & Decentralized Finance](#13-building-block-k--digital-assets--decentralized-finance)
+- [14. Building Block L — Legacy Banking & Mainframe Modernization](#14-building-block-l--legacy-banking--mainframe-modernization)
+- [15. External / Non-Open-Source Reference Block](#15-external--non-open-source-reference-block)
+- [16. Consolidated Building-Block Architecture](#16-consolidated-building-block-architecture)
+- [17. Recommended Logical Services](#17-recommended-logical-services)
+- [18. Integration Rules](#18-integration-rules)
+- [19. Open-Source Software Compendium — Architectural Classification](#19-open-source-software-compendium--architectural-classification)
+- [20. Recommended MVP](#20-recommended-mvp)
+- [21. Evolution Roadmap](#21-evolution-roadmap)
+- [22. Architectural Principle](#22-architectural-principle)
+- [23. Standalone OBS Payment and Credit Gateway with FTM Rental and Sales](#23-standalone-obs-payment-and-credit-gateway-with-ftm-rental-and-sales)
+  - [23.1 Scope, status and financial ownership](#231-scope-status-and-financial-ownership)
+  - [23.2 Integrated subsystem registry](#232-integrated-subsystem-registry)
+  - [23.3 Mapping to the original OBS compendium](#233-mapping-to-the-original-obs-compendium)
+  - [23.4 Consolidated architecture](#234-consolidated-architecture)
+  - [23.5 Gateway and payment process](#235-gateway-and-payment-process)
+  - [23.6 Credit and loan process](#236-credit-and-loan-process)
+  - [23.7 JFXAI4FTM rental, sale and rent-to-own](#237-jfxai4ftm-rental-sale-and-rent-to-own)
+  - [23.8 FTM business-to-finance process](#238-ftm-business-to-finance-process)
+  - [23.9 Canonical financial and commercial contracts](#239-canonical-financial-and-commercial-contracts)
+  - [23.10 Bonsai reactive middleware](#2310-bonsai-reactive-middleware)
+  - [23.11 AI decision support](#2311-ai-decision-support)
+  - [23.12 Operational controls and data boundaries](#2312-operational-controls-and-data-boundaries)
+  - [23.13 Deployment profiles](#2313-deployment-profiles)
+  - [23.14 Delivery roadmap and acceptance criteria](#2314-delivery-roadmap-and-acceptance-criteria)
+  - [23.15 Proposed integration manifest](#2315-proposed-integration-manifest)
+  - [23.16 Sources and review notes](#2316-sources-and-review-notes)
+
 ---
 
 ## 1. Architectural Direction
@@ -989,3 +1031,517 @@ Governed AI
 ```
 
 This approach allows JFXAI4OBS to evolve from a software compendium into an executable **Open Banking + Lending + Financial Engineering platform architecture** without forcing every upstream project into the same runtime.
+
+---
+
+# 23. Standalone OBS Payment and Credit Gateway with FTM Rental and Sales
+
+> **Architecture proposal:** JFXAI4OBS is the sole project baseline for this gateway. The integration extends its financial building blocks with business and engineering subsystems, including food-truck rental, outright sale and rent-to-own through JFXAI4FTM. The only added Bonsai component is sdk2035/bonsai.
+
+## 23.1 Scope, status and financial ownership
+
+This consolidated extension connects the OBS payment and lending services to B2B commerce, farm operations, treasury analysis and mobile food-service businesses. It builds on the original OBS sections 1–22.
+
+Within the OBS boundary, the selected loan-management engine owns loan accounts and schedules; the payment service owns payment intents and reconciliation records. Banks, lenders and payment providers remain authoritative for the actual funds and accounts they operate. Their confirmations are reconciled with OBS. Legacy systems retain their authority until a reviewed migration is completed.
+
+Each integrated business subsystem retains its own operational records. Financial actions enter through the OBS gateway; an order, booking or AI recommendation cannot directly post a financial ledger entry.
+
+**Implementation status:** the blocks, routes, events and API extensions below are proposed contracts. Repository descriptions establish their intended domains; they do not establish that the complete gateway or FTM rental/sales extension is implemented.
+
+The only financial execution path is:
+
+1. An authenticated business channel submits an intent.
+2. OBS verifies the relevant permission, consent, mandate and policy.
+3. An authorized customer or operator approves where the product requires it.
+4. An OBS provider adapter submits the instruction.
+5. OBS verifies the result, reconciles the records and publishes a status event.
+
+## 23.2 Integrated subsystem registry
+
+| Project | Role in this architecture | Inputs to OBS | Output received from OBS | Ownership boundary |
+|---|---|---|---|---|
+| [JFXAI4OBS](https://github.com/robotics-intelligent-systems/jfxai4obs) | Financial core and gateway | Payment intents, credit applications, authorized account data | Decisions, payment states, schedules and reconciliation results | Owns financial workflow state and the selected internal ledgers |
+| [JFXAI4OHS](https://github.com/robotics-intelligent-systems/jfxai4ohs) | B2B commerce subsystem | Approved orders, invoices, supplier references and payment terms | Payment status and scoped financing decisions | Owns catalog, supplier and procurement records |
+| [JFXFMIS](https://github.com/robotics-intelligent-systems/jfxfmis) | Agrifinance input subsystem | Farm assets, operational costs, inventory and verified production projections | Payment, facility and repayment status | Owns farm operations and asset evidence |
+| [JFXAI4ATS](https://github.com/robotics-intelligent-systems/jfxai4ats) | Treasury and exposure analysis subsystem | Approved valuation, liquidity and market-risk projections | Scoped funding and limit information | Trading execution stays outside the payment gateway |
+| [JFXAI4FTM](https://github.com/robotics-intelligent-systems/jfxai4ftm) | Food-truck rental and sales subsystem | Asset listings, reservations, quotes, contracts, invoices, handover and return evidence | Collection, deposit, financing and reconciliation status | Owns truck availability, commercial agreements and operational asset records |
+| [JFXICP](https://github.com/robotics-intelligent-systems/jfxicp) | Integration fabric | Validated APIs, events and normalized projections | Versioned OBS responses and events | Owns transport mappings and delivery; no ledger authority |
+| [JFXLEGACY2MODERN](https://github.com/robotics-intelligent-systems/jfxlegacy2modern) | Controlled modernization subsystem | Reviewed legacy mappings, data migrations and regression evidence | Target contracts and reconciliation results | Changes move through staging and an approved cutover |
+| [JFXLCDP](https://github.com/robotics-intelligent-systems/jfxlcdp) | Modeling and development subsystem | Requirements, product/workflow models, API schemas and test artifacts | Contract validation and change-review feedback | Produces engineering artifacts; no payment authority |
+| [sdk2035/bonsai](https://github.com/sdk2035/bonsai) | Reactive workflow and scenario component | Validated event projections and approved scenario inputs | Scenario metrics and workflow evidence | Has no credentials or authority for financial execution |
+
+Read-only projections and command submission are different permissions. For example, FTM may submit a payment-intent request through its OBS adapter while remaining unable to update the payment ledger directly.
+
+## 23.3 Mapping to the original OBS compendium
+
+The original compendium remains categorized by responsibility. Select and validate concrete implementations behind these interfaces; the presence of several candidates does not require deploying them all.
+
+| OBS capability | Existing candidates or references | Extension role |
+|---|---|---|
+| Identity and customer permission | OAuth/OIDC, Open Bank Project, optional ACA-Py | Authenticate parties and verify permissions for payments, account access and financing |
+| Lending | Apache Fineract, OpenCBS, Frappe Lending, Mifos ecosystem | Originate and service approved B2B, agrifinance or food-truck loans |
+| Open banking | Open Bank Project, PSD2/XS2A, PyFinTS and provider adapters | Retrieve permissioned account data and support available payment-initiation routes |
+| Payment orchestration | Hyperswitch, SEPA tooling and local bank/PSP adapters | Route payments, refunds and repayments according to provider capability |
+| Financial engineering | BeforeIT.jl and approved scenario services | Evaluate cash flow, seasonality, residual value and liquidity assumptions |
+| AI decision support | FinRobot, PIXIU and the original evaluation components | Extract documents and propose explainable financial features |
+| Workflow and preparation | Existing workflow/data candidates; added sdk2035/bonsai | Keep durable business state in OBS; use Bonsai for bounded reactive processing |
+| Semantic contracts | Canonical OBS schemas; BIAN/FINOS mappings where applicable | Map business invoices and agreements to financial capabilities |
+| Enterprise and legacy integration | Existing mainframe adapters plus JFXICP and JFXLEGACY2MODERN | Connect providers and business systems while preserving reconciliation |
+| Business channels | OHS, FMIS, ATS and added FTM | Submit scoped business requests and consume financial status |
+
+This table is an architectural mapping, not a new compatibility or licensing claim about the original components.
+
+## 23.4 Consolidated architecture
+
+```mermaid
+flowchart TD
+  subgraph BUS["Business subsystems"]
+    direction TB
+    FTM["JFXAI4FTM rental and sales"]
+    OHS["JFXAI4OHS B2B"]
+    FMIS["JFXFMIS agrifinance"]
+    ATS["JFXAI4ATS risk projections"]
+  end
+  FTM --> INT["JFXICP adapters"]
+  OHS --> INT
+  FMIS --> INT
+  ATS --> INT
+  INT --> GW["JFXAI4OBS gateway and consent"]
+  GW --> PAY["Payment orchestration"]
+  GW --> CREDIT["Lending and credit policy"]
+  CREDIT -->|Approved disbursement| PAY
+  PAY --> BANK["Banks and payment providers"]
+  BANK --> REC["OBS reconciliation and ledgers"]
+  REC -->|Financial status| INT
+```
+
+Engineering and reactive processing support the OBS services through separate interfaces:
+
+```mermaid
+flowchart TD
+  LCDP["JFXLCDP requirements"] --> REVIEW["Reviewed contracts and policies"]
+  LEG["JFXLEGACY2MODERN mappings"] --> REVIEW
+  REVIEW --> SERVICES["OBS services and JFXICP adapters"]
+  SERVICES --> FEED["Authorized event projections"]
+  FEED --> BON["sdk2035/bonsai reactive graphs"]
+  BON --> SCEN["Financial scenario service"]
+  SCEN --> EVID["Metrics and evidence"]
+  EVID --> DEC["OBS decision review"]
+  DEC --> SERVICES
+```
+
+The scenario service implements financial calculations. Bonsai coordinates input streams and results; it is not itself a lending engine or a financial model.
+
+## 23.5 Gateway and payment process
+
+| Step | Action | Owner | Result |
+|---|---|---|---|
+| 1 | Receive a payment intent with amount, purpose and source reference | OBS gateway | Request ID and scoped idempotency key |
+| 2 | Authenticate the caller and check account-access consent, payment authorization or collection mandate as applicable | OBS identity/consent | Verified authorization context |
+| 3 | Retrieve the necessary invoice, contract or asset projection | Business subsystem via JFXICP | Versioned input snapshot |
+| 4 | Validate currency, payee, amount, invoice balance, expiry and data freshness | OBS validation | Accepted request or actionable rejection |
+| 5 | Run risk and product-policy checks; obtain the required approval | OBS risk and approval services | Approved, declined or review-required decision |
+| 6 | Submit the approved payment through the selected provider adapter | OBS payment orchestrator | Provider reference and pending state |
+| 7 | Verify provider events and reconcile the outcome | OBS reconciliation | Settled, failed, reversed or unresolved state |
+| 8 | Publish a minimal financial-status event | OBS event service | Business status update with evidence references |
+
+Account-information consent, a payment authorization, a recurring-collection mandate and acceptance of a commercial contract are separate records. One does not grant the others automatically.
+
+### Payment reliability
+
+- Scope idempotency keys by tenant, operation and source obligation; store a request hash. Repeating an identical request returns the existing result. Reusing a key with a changed payload is rejected.
+- Represent money in integer minor units with a currency/exponent definition, or fixed-precision decimals governed by the currency contract. Do not use binary floating-point for ledger amounts.
+- Verify webhook signatures, event IDs, source and replay windows; deduplicate and process events through allowed state transitions.
+- A timeout after submission means the outcome is unknown. Query by provider reference or reconcile before resubmitting. Provider failover must not create a second charge for an unresolved instruction.
+- Use transactional outbox/inbox patterns or an equivalent durable mechanism. Design for repeated message delivery rather than claiming universal exactly-once execution.
+- Separate authorization, capture, settlement, refund and dispute states when the selected rail supports them. A browser redirect or HTTP success alone is not settlement evidence.
+- Refunds and corrections create linked compensating records. They do not erase the original transaction.
+
+An approved merchant purchase or FTM booking does not authorize OBS to use that customer's funds for a trading strategy.
+
+## 23.6 Credit and loan process
+
+| Stage | OBS responsibility | Permitted business input |
+|---|---|---|
+| Application | Record applicant, product, amount, purpose and requested term | OHS invoice, FMIS investment or FTM asset quote |
+| Permissioned enrichment | Retrieve authorized accounts, liabilities and transaction evidence | Fresh, purpose-bound business projections |
+| Assessment | Calculate affordability, cash-flow scenarios and policy features | ATS risk context or FTM seasonal revenue evidence when relevant and authorized |
+| Decision review | Apply deterministic product rules and record reasons and reviewer | AI supplies evidence and recommendations |
+| Offer | Issue versioned price, fees, schedule, expiry and conditions | Merchant/lessor identity and intended use |
+| Acceptance | Record customer acceptance and required signatures | Referenced commercial agreement |
+| Disbursement | Instruct the OBS payment service after the product conditions are satisfied | Verified payee and asset/invoice references |
+| Servicing | Allocate repayments, track balances and manage approved changes | Contract status and relevant operating updates |
+| Closure | Reconcile early payoff, maturity, cancellation or default resolution | Documented sale, return or agreement termination |
+
+OBS may implement approved delegated rules, but a model-generated message cannot approve its own recommendation. The first release uses reviewer approval for credit decisions, disbursements and product-policy changes.
+
+The lender, merchant, lessor, operator and asset owner are explicitly identified. The software gateway does not assume that these parties are the same organization.
+
+## 23.7 JFXAI4FTM rental, sale and rent-to-own
+
+The [FTM README](https://github.com/robotics-intelligent-systems/jfxai4ftm/blob/main/README.md) describes food-truck and mobile food-service management, including POS, ordering, inventory, fleet records and payment-adapter boundaries. This section proposes an additional commercial module for food trucks, mobile kitchens and eligible equipment.
+
+### Commercial modes
+
+| Mode | FTM responsibilities | OBS responsibilities | Completion condition |
+|---|---|---|---|
+| Rental | Publish availability, quote a period, reserve the asset, record handover and return | Collect rent, manage the selected deposit mechanism, issue approved refunds and reconcile | Return accepted and outstanding obligations resolved |
+| Outright sale | Publish asset listing, accepted quote, invoice and delivery/title documents | Collect purchase price, reconcile seller payout and handle approved refunds | Payment condition met and documented delivery/title process completed |
+| Financed sale | Maintain the sale agreement, asset identity and supplier obligations | Originate credit, disburse under approved conditions and service the loan | Commercial delivery and ongoing financing tracked separately |
+| Rent-to-own | Manage lease term, purchase option, credited rent and residual-price provisions | Track agreed collection allocations and any distinct financing contract | Customer exercises the option and the documented transfer conditions are fulfilled |
+
+An ordinary rental is not automatically a loan. A rent-to-own agreement may require a distinct financial product depending on its contract and deployment jurisdiction. Configure that product explicitly rather than labeling every rental invoice as credit.
+
+### Records and ownership
+
+| Record | Authoritative owner | Information shared across the integration |
+|---|---|---|
+| Truck, mobile kitchen or equipment | FTM asset registry | Asset ID, verified owner, category, condition and listing revision |
+| Availability and reservation | FTM booking service | Period, reservation status, hold expiry and agreement ID |
+| Commercial quote and agreement | FTM contract service | Mode, approved amounts, currency, terms version and acceptance evidence |
+| Bank connection and customer consent | OBS | Scoped references; no raw access tokens shared with FTM |
+| Payment intent, deposit and refund | OBS | Verified financial status and provider reference |
+| Loan and repayment schedule | OBS lending | Loan reference, authorized summary and servicing status |
+| Inspection, delivery and return | FTM | Signed checklist/document references and dispute status |
+| Title or ownership documentation | FTM or the designated asset registry | Documented transfer approval; never inferred from one payment event |
+
+Keep POS food sales, vehicle rental receipts, asset sale proceeds, deposits and loan repayments as separate obligation types. Meal sales can support an authorized cash-flow assessment without becoming the repayment ledger.
+
+### Rental lifecycle
+
+1. The customer selects an asset and rental dates. FTM checks availability and records an expiring reservation using a concurrency-safe booking operation.
+2. FTM issues a quote separating rent, taxes, delivery, service fees and security deposit, with cancellation and return terms.
+3. The customer accepts the agreement. OBS obtains the relevant payment authorization or recurring mandate.
+4. FTM sends approved invoice/deposit intents to OBS through JFXICP. OBS verifies the contract reference, payee and amounts.
+5. OBS processes the rent and deposit using the provider's supported mechanism. FTM receives authoritative status events.
+6. An authorized FTM operator records handover after the agreed payment, identity and condition checks. Payment does not itself certify vehicle condition.
+7. Recurring obligations are invoiced under the signed schedule. An amendment produces a new approved version; retries do not change the amount due.
+8. On return, FTM records inspection and any proposed charges. Disputed damage charges remain in review.
+9. OBS releases an authorization hold or refunds a collected deposit according to the actual mechanism and approved deductions.
+10. FTM closes the reservation after the operational and financial obligations are resolved.
+
+### Deposit handling
+
+A card authorization hold and a collected refundable security deposit are different products. A provider may not support either for the desired duration. Record the mechanism, expiry and permitted release/capture/refund operations explicitly.
+
+For a collected deposit, the selected accounting policy tracks the refundable balance separately from earned rent. A held amount is not recorded as settled cash. A deposit is not automatically applied to a loan, damage charge or purchase balance without contractual authority and the required approval.
+
+### Sale and financed-sale lifecycle
+
+1. FTM records the asset identity, verified seller, condition evidence and accepted sale quote.
+2. OBS either collects the purchase price or evaluates a financing application linked to that quote.
+3. Financing records identify the lender, borrower, seller/payee, principal, fees, term and applicable delivery/disbursement conditions.
+4. OBS executes authorized collections or disbursement and reconciles the provider result.
+5. FTM records handover, delivery acceptance and the required title documents. An unresolved or disputed payment suspends the agreed release step.
+6. Refunds, cancellations or failed delivery generate linked obligations for review. An FTM order cancellation does not silently cancel an outstanding loan.
+
+### Rent-to-own allocation and purchase option
+
+The agreement must explicitly define:
+
+- Rental period, billing frequency and due dates.
+- Deposit mechanism and refundable amount.
+- Rent, service fees, taxes and any separately documented financing charges.
+- Which settled rental amounts, if any, are credited toward purchase.
+- Purchase-option window, residual/buyout amount, expiry and transfer conditions.
+- Rules for refunds, missed payments, early termination and exercise of the option.
+- Maintenance, insurance and inspection responsibilities.
+
+Use an approved allocation schedule to distinguish earned rent, purchase credits, deposit balances and loan principal. Do not credit the same payment twice. A purchase-option quote references the settled allocations used to calculate the amount due and expires when those inputs change.
+
+Customer option exercise creates an approved buyout obligation. After OBS confirms the required settlement, FTM completes the documented ownership-transfer workflow. Late payment creates a servicing case; it does not automatically transfer title or issue vehicle-control commands.
+
+## 23.8 FTM business-to-finance process
+
+```mermaid
+flowchart TD
+  QUOTE["FTM asset quote"] --> MODE{"Commercial mode"}
+  MODE -->|Rental| BOOK["Reservation and rental agreement"]
+  MODE -->|Sale| SALE["Sale agreement"]
+  MODE -->|Rent to own| OPTION["Rental and purchase-option terms"]
+  BOOK --> OBS["OBS authorization and policy"]
+  SALE --> OBS
+  OPTION --> OBS
+  OBS --> FUNDS{"Funding path"}
+  FUNDS -->|Direct payment| PAY["OBS payment intent"]
+  FUNDS -->|Financing| LOAN["OBS credit review and acceptance"]
+  LOAN --> PAY
+  PAY --> RESULT{"Verified financial result"}
+  RESULT -->|Approved release condition| HAND["FTM handover or transfer workflow"]
+  RESULT -->|Unresolved or failed| REVIEW["Review, reconcile or cancel"]
+  HAND --> LIFE["Return, servicing or option exercise"]
+```
+
+Integration examples:
+
+| Scenario | Business request | OBS response | FTM outcome |
+|---|---|---|---|
+| Short event rental | Reservation plus rent and deposit intents | Rent settled; deposit mechanism confirmed | Operator completes handover |
+| Monthly fleet rental | Accepted schedule and recurring collection mandate | Per-obligation payment status | Agreement remains active or moves to review |
+| Direct asset sale | Accepted asset invoice | Verified collection and settlement state | Delivery/title workflow proceeds |
+| Food-truck financing | Asset quote and permissioned cash-flow evidence | Loan offer, acceptance and disbursement status | Asset release follows the agreed conditions |
+| Rent-to-own buyout | Accepted option-exercise quote and allocation snapshot | Buyout payment reconciled | Authorized title transfer is documented |
+| Return with disputed damage | Inspection evidence and proposed charge | Charge remains pending review | Refundable balance and dispute remain traceable |
+
+## 23.9 Canonical financial and commercial contracts
+
+The following additions extend the original Canonical Loan API. They are application-level proposals and must be published as versioned OpenAPI/AsyncAPI contracts.
+
+### Core entities
+
+| Entity | Owner | Required content |
+|---|---|---|
+| BusinessProjection | Source via JFXICP | Source system, tenant, revision, observed time, expiry, permitted purpose and payload hash |
+| AssetListing | FTM | Asset ID, owner, commercial modes, specification and availability revision |
+| Reservation | FTM | Asset, customer, time interval, expiry, status and concurrency version |
+| CommercialAgreement | FTM | Mode, parties, currency, quote version, terms hash, signatures and obligation references |
+| PaymentIntent | OBS | Payer, payee, obligation, amount, currency, idempotency key and authorization context |
+| DepositRecord | OBS | Mechanism, authorized/collected/refunded amounts, expiry and provider state |
+| CreditApplication | OBS | Applicant, purpose, product, asset/invoice reference and authorized evidence |
+| Loan | OBS lending | Accepted terms, lender, principal, schedule, allocation rules and servicing state |
+| PurchaseOption | FTM | Exercise window, agreed credit policy, buyout quote and transfer conditions |
+| PaymentAllocation | OBS | Settled transaction, obligation component, amount and schedule revision |
+| EvidenceBundle | OBS audit | Inputs, decisions, approvers, provider events and immutable document references |
+
+### Proposed API additions
+
+| Route | Owner | Purpose |
+|---|---|---|
+| POST /api/v1/ftm/reservations | FTM | Reserve an available asset with an expiry and concurrency check |
+| POST /api/v1/ftm/agreements | FTM | Register a reviewed rental, sale or rent-to-own agreement |
+| POST /api/v1/ftm/agreements/{id}/option-exercises | FTM | Request exercise of an accepted purchase option |
+| POST /api/v1/ftm/returns | FTM | Record a return and inspection evidence |
+| POST /api/v1/obs/payment-intents | OBS | Create an authenticated financial intent |
+| POST /api/v1/obs/payment-intents/{id}/approvals | OBS | Record required approval and policy version |
+| POST /api/v1/obs/payment-intents/{id}/executions | OBS | Restricted submission by the payment worker |
+| POST /api/v1/obs/refund-requests | OBS | Request a linked refund with reason and authority |
+| POST /api/v1/obs/credit-applications | OBS | Apply for a defined financing product |
+| POST /api/v1/obs/loans/{id}/disbursement-requests | OBS | Request disbursement under accepted terms |
+| GET /api/v1/obs/agreements/{id}/financial-summary | OBS | Return a scoped financial projection |
+| POST /api/v1/obs/provider-events | OBS | Receive, verify and deduplicate provider events |
+
+The engineering and Bonsai service identities cannot call execution or disbursement routes. Business clients can request intents but cannot assert that they are approved or settled.
+
+### Illustrative FTM payment request
+
+```json
+{
+  "schema_version": "1.0.0",
+  "request_id": "req-demo-001",
+  "correlation_id": "agreement-demo-001",
+  "idempotency_key": "tenant-demo:agreement-demo-001:rent:2026-10",
+  "source_system": "jfxai4ftm",
+  "tenant_id": "tenant-demo",
+  "commercial": {
+    "mode": "RENTAL",
+    "asset_id": "truck-demo-001",
+    "agreement_id": "agreement-demo-001",
+    "agreement_version": 1,
+    "terms_hash": "sha256:example"
+  },
+  "obligation": {
+    "obligation_id": "rent-demo-001",
+    "type": "RENTAL_CHARGE",
+    "payer_ref": "customer-demo",
+    "payee_ref": "lessor-demo",
+    "amount_minor": 100000,
+    "currency": "USD",
+    "currency_exponent": 2
+  },
+  "authorization": {
+    "payment_authorization_ref": "authorization-demo",
+    "recurring_mandate_ref": null
+  },
+  "provenance": {
+    "projection_revision": "ftm-projection-demo",
+    "evidence_refs": ["accepted-agreement-demo"]
+  }
+}
+```
+
+This is synthetic test data, not a rental-price recommendation. OBS resolves the authenticated tenant, verifies the amount against the accepted obligation and validates all authorization references internally. Client-supplied reference fields do not grant access.
+
+### Event families
+
+| Family | Examples | Publishing authority |
+|---|---|---|
+| ftm.asset.* | listed, availability_changed | FTM |
+| ftm.reservation.* | created, expired, cancelled | FTM |
+| ftm.agreement.* | accepted, amended, terminated | FTM |
+| ftm.asset_handover.* / ftm.asset_return.* | recorded, inspected, disputed | FTM |
+| ftm.purchase_option.* | requested, accepted, expired | FTM |
+| ftm.ownership_transfer.* | requested, completed | FTM after documented approval |
+| obs.consent.* | granted, revoked, expired | OBS consent service |
+| obs.payment.* | pending, authorized, settled, failed, reversed | OBS after provider verification |
+| obs.deposit.* | held, collected, released, partially_refunded | OBS |
+| obs.loan.* | application_received, decision_recorded, disbursed, repaid | OBS lending |
+| obs.reconciliation.* | matched, exception_opened, exception_resolved | OBS |
+| obs.scenario.* / obs.evidence.* | completed, recorded | Authorized OBS analytical/audit services |
+
+Every event carries event ID, schema version, tenant, correlation ID, aggregate version, event time and provenance. Consumers enforce publisher permissions and reject incompatible states. Corrections use linked events.
+
+## 23.10 Bonsai reactive middleware
+
+[sdk2035/bonsai](https://github.com/sdk2035/bonsai) belongs to the Bonsai-Rx visual reactive programming ecosystem. It is the only added Bonsai package in this extension.
+
+Proposed applications:
+
+- Join sanitized FTM invoice and OBS payment-status projections.
+- Detect workflow exceptions and prepare operator-review queues.
+- Trigger an approved financial scenario service and collect its results.
+- Replay cash-flow, seasonality, maintenance-cost and payment-delay scenarios.
+- Produce traceable metrics for rental pricing or credit review.
+- Prepare operator-facing views of scenario and workflow results.
+
+Required boundaries:
+
+| Concern | Design rule |
+|---|---|
+| Durable state | OBS stores financial process state; a reactive subscription is not a transaction ledger |
+| Financial models | Use validated financial services for calculations; graph composition alone is not a credit model |
+| Access | Read approved event projections; emit recommendations and evidence through scoped endpoints |
+| Secrets | No bank, payment-execution or disbursement credentials in graph workers |
+| Failure | Bounded queues, timeouts, replay checkpoints and restart behavior are specified |
+| Reproducibility | Record graph version, input snapshot, scenario parameters and computation version |
+| Approval | Graph output cannot approve payments, loans, policy thresholds or ownership transfer |
+
+Existing OBS financial-engineering components remain optional candidates under their original categories. No hosted Bonsai service is required for this extension.
+
+## 23.11 AI decision support
+
+| Capability | Proposed AI role | Decision owner |
+|---|---|---|
+| Document intake | Extract invoice, agreement and asset-document fields with source references | OBS/FTM reviewer |
+| Cash-flow analysis | Compare permissioned POS history with seasonal and expense assumptions | OBS credit analyst |
+| Rental pricing | Propose a quote using utilization, maintenance and commercial constraints | FTM commercial owner |
+| Residual value | Estimate a range and explain uncertainty | Qualified asset/risk reviewer |
+| Fraud triage | Flag inconsistent parties, repeated invoices or anomalous payment behavior | OBS risk operations |
+| Credit assessment | Supply calibrated features and reason candidates | OBS policy and credit reviewer |
+| Collections support | Draft a servicing summary from verified obligations | Authorized servicer |
+
+Revenue forecasts do not establish ability to repay. Digital-twin or telemetry records do not prove legal ownership, collateral eligibility or future resale value. Use validated evidence and independent review for those decisions.
+
+Models retain version, data lineage, evaluation results, explanation evidence and rollback state. A generated message cannot change an accepted contract, approve a credit decision or authorize a financial execution.
+
+## 23.12 Operational controls and data boundaries
+
+- Financial records remain in the selected OBS services and ledgers. Business subsystems retain operational records and receive scoped status projections.
+- OBS verifies consent purpose, expiry and revocation for account data. Provider rules and accepted contracts determine separate payment mandates and retention duties.
+- Tenant isolation applies to invoices, assets, agreements, loans and event subscriptions. FTM must not expose one operator's receipts or another customer's loan details.
+- Provider credentials remain in a vault. Tokens, full account identifiers and unnecessary personal data are excluded from prompts, graph files and telemetry.
+- Deposits, rental income, sale proceeds, fees, refunds and loan allocations are distinct accounting items. Reconciliation verifies totals and currency.
+- Required approvals are persisted with actor, role, terms/policy version, time and evidence.
+- Feature extraction uses the smallest relevant projection. Location and food-order details are omitted from credit inputs unless authorized and necessary for the stated purpose.
+- Production adoption uses a component inventory with pinned revisions, dependency notices and license verification. Repository inclusion alone is not a redistribution license.
+- Deployment-specific banking, lending, asset-rental, consumer and title-transfer rules are mapped to the chosen product and provider before real transactions.
+
+## 23.13 Deployment profiles
+
+| Profile | OBS behavior | FTM behavior | Bonsai behavior |
+|---|---|---|---|
+| Local development | Synthetic accounts, test ledger and mocked providers | Synthetic assets, reservations and sample agreements | Local projections and reproducible test scenarios |
+| Private sandbox | Provider test APIs and reviewed consent/mandate flows | Rental, sale and rent-to-own test journeys | Sanitized event replay and scenario evaluation |
+| Private production | Approved products, vault, reconciliation, monitoring and recovery | Real listings and contracts with operational controls | Scoped analytical workers without financial credentials |
+| Optional external analytics | OBS executes and records financial operations within its controlled boundary | Shares only authorized minimal projections | Optional approved analytics connection; no mandatory cloud |
+
+FTM may buffer operational events during intermittent connectivity. A buffered event is not proof of payment. Release of an asset follows the accepted agreement and verified OBS status, including an explicit procedure for unavailable providers.
+
+## 23.14 Delivery roadmap and acceptance criteria
+
+| Milestone | Deliverable | Acceptance evidence |
+|---|---|---|
+| OBS-0 | OBS boundary, product catalog and ownership map | Each financial record has an owner; existing engine choices are explicit |
+| OBS-1 | Canonical payment and loan contracts | Valid, duplicate, conflicting and unauthorized requests handled correctly |
+| OBS-2 | JFXICP adapters for OHS, FMIS, ATS and FTM | Permissioned projections carry revision, expiry and provenance |
+| OBS-3 | Payment sandbox and reconciliation | Duplicate and out-of-order webhooks do not duplicate charges; unknown outcomes reconcile |
+| OBS-4 | Credit application and servicing slice | Approved offer, disbursement, repayment allocation and reason records agree |
+| OBS-5 | FTM rental and deposits | No double-booked asset; expired reservations handled; deposit release/refund reflects the provider mechanism |
+| OBS-6 | FTM direct and financed sale | Delivery, payout and financing conditions remain consistent during cancellation |
+| OBS-7 | FTM rent-to-own | Settled credits, buyout balance, refunds and title approval reconcile without double allocation |
+| OBS-8 | Modeling and legacy integration | Reviewed contracts and migrated records pass regression and balance comparison |
+| OBS-9 | Bonsai scenario workflows | Restart/replay is traceable; graph identity cannot call financial execution endpoints |
+| OBS-10 | Selected production release | Recovery, access controls, provider integration and operational runbooks pass review |
+
+Suggested first demonstrator: one food truck, one lessor, one customer, a fixed-term rental, separate rent and deposit obligations, mocked provider events, handover, return, refund and reconciliation. Add financed sale and rent-to-own only after this complete lifecycle is verified.
+
+## 23.15 Proposed integration manifest
+
+```yaml
+project_id: jfxai4obs-payment-credit-gateway
+architecture_base:
+  repository: robotics-intelligent-systems/jfxai4obs
+  status: proposed-integration
+  default_profile: local-development
+financial_authority:
+  payment_process: obs-payment-service
+  loan_process: obs-selected-lending-engine
+  external_funds: bank-or-payment-provider
+  reconciliation: obs-reconciliation-service
+
+business_subsystems:
+  - repository: robotics-intelligent-systems/jfxai4ohs
+    role: b2b-orders-and-invoices
+  - repository: robotics-intelligent-systems/jfxfmis
+    role: agrifinance-projections
+  - repository: robotics-intelligent-systems/jfxai4ats
+    role: authorized-treasury-and-risk-projections
+  - repository: robotics-intelligent-systems/jfxai4ftm
+    role: food-truck-rental-and-sales
+    commercial_modes:
+      - RENTAL
+      - SALE
+      - FINANCED_SALE
+      - RENT_TO_OWN
+    operational_owner: ftm
+    financial_gateway: jfxai4obs
+    deposit_mechanism: product-and-provider-defined
+
+engineering_subsystems:
+  - repository: robotics-intelligent-systems/jfxicp
+    role: adapters-and-contract-normalization
+  - repository: robotics-intelligent-systems/jfxlegacy2modern
+    role: reviewed-mapping-and-migration
+  - repository: robotics-intelligent-systems/jfxlcdp
+    role: requirements-and-workflow-artifacts
+
+reactive_component:
+  repository: sdk2035/bonsai
+  role: reactive-processing-and-financial-scenario-coordination
+  runtime: local
+  credentials: projection-and-evidence-scopes-only
+
+controls:
+  direct_external_ledger_writes: false
+  tenant_authorization: required
+  payment_authorization: required
+  recurring_mandate: required-when-applicable
+  account_data_consent: required-when-applicable
+  credit_reviewer_approval: required
+  idempotency_and_reconciliation: required
+  commercial_terms_versioning: required
+  documented_asset_transfer: required
+```
+
+This manifest describes intended configuration. It is not an executable installer and does not establish upstream API compatibility.
+
+## 23.16 Sources and review notes
+
+**Document baseline:** the supplied README(2).md, containing OBS sections 1–22, is preserved below the added table of contents and above this extension.
+
+**Reviewed FTM source:** README blob b0ab534075fa356b7dbc1af8743aa86f0968a97b, retrieved on 2026-09-14 through the [FTM repository README](https://github.com/robotics-intelligent-systems/jfxai4ftm/blob/main/README.md). This is a content-blob identifier, not a pinned repository commit.
+
+The rental, sale, financed-sale and rent-to-own module is a proposed addition derived from that operational scope and the requested OBS integration. The current source describes a reference architecture/technology compendium; no implemented rental gateway is claimed.
+
+| Reference | Use in this consolidated proposal |
+|---|---|
+| [JFXAI4OBS](https://github.com/robotics-intelligent-systems/jfxai4obs) | Sole project baseline for payments, open banking and lending |
+| [JFXAI4FTM](https://github.com/robotics-intelligent-systems/jfxai4ftm) | Food-truck/fleet operations and proposed rental/sales extension |
+| [JFXAI4OHS](https://github.com/robotics-intelligent-systems/jfxai4ohs) | B2B orders and procurement |
+| [JFXFMIS](https://github.com/robotics-intelligent-systems/jfxfmis) | Agricultural operational context |
+| [JFXAI4ATS](https://github.com/robotics-intelligent-systems/jfxai4ats) | Treasury and quantitative risk context |
+| [JFXICP](https://github.com/robotics-intelligent-systems/jfxicp) | Interoperability fabric |
+| [JFXLEGACY2MODERN](https://github.com/robotics-intelligent-systems/jfxlegacy2modern) | Reviewed modernization artifacts |
+| [JFXLCDP](https://github.com/robotics-intelligent-systems/jfxlcdp) | Specification and workflow modeling |
+| [sdk2035/bonsai](https://github.com/sdk2035/bonsai) | Visual reactive programming component |
+
+Pin actual repository commits, provider contracts, model versions and package locks during implementation. Verify licenses against the selected source files and dependencies rather than assuming that every candidate has the same distribution terms.
