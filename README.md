@@ -28,6 +28,7 @@
 - [12. Building Block J — Enterprise Architecture & Governance](#12-building-block-j--enterprise-architecture--governance)
 - [13. Building Block K — Digital Assets & Decentralized Finance](#13-building-block-k--digital-assets--decentralized-finance)
 - [14. Building Block L — Legacy Banking & Mainframe Modernization](#14-building-block-l--legacy-banking--mainframe-modernization)
+- [14.1 GraalCOBOL dependency integration](#141-graalcobol-dependency-integration)
 - [15. External / Non-Open-Source Reference Block](#15-external--non-open-source-reference-block)
 - [16. Consolidated Building-Block Architecture](#16-consolidated-building-block-architecture)
 - [17. Recommended Logical Services](#17-recommended-logical-services)
@@ -100,7 +101,7 @@ flowchart TB
   I["I: Durable workflows and prepared data"] -.-> G
   J["J: Architecture, audit and MLOps"] -.-> I
   K["K: Optional digital-asset sandbox"] -.-> E
-  L["L: Conditional legacy adapters"] -.-> D
+  L["L: Legacy adapters and planned GraalCOBOL"] -.-> D
 ```
 
 ---
@@ -599,7 +600,8 @@ This is a major differentiator of the architecture.
 |---|---|
 | **API Mediation Layer (API ML)** | Unified REST access to mainframe services |
 | **Agentic COBOL Reverse Engineering** | AI-assisted understanding/documentation of legacy code |
-| **COBOL 4J** | COBOL/JVM modernization and interoperability candidate |
+| **[GraalCOBOL](https://github.com/sdk2035/GraalCOBOL)** | Planned Rascal/IR/Truffle modernization dependency; inactive until acceptance gates pass |
+| **COBOL 4J** | Comparative COBOL/JVM reference only; no selected runtime dependency |
 | **Cobrix** | Read COBOL/mainframe datasets through Apache Spark |
 | **CICS/COBOL Cash Account** | Reference banking/account implementation |
 | **jank** | Experimental Clojure/native language research; not core financial dependency |
@@ -642,6 +644,18 @@ Canonical API / Modern Service
 ```
 
 The AI must not automatically rewrite or replace financial mainframe logic without tests, reconciliation and expert validation.
+
+---
+
+## 14.1 GraalCOBOL dependency integration
+
+[GraalCOBOL](https://github.com/sdk2035/GraalCOBOL/tree/87bf9c63f62eee5e5a639dac7135c4c70ed3d54c) replaces COBOL 4J as the **planned modernization dependency** for this block. COBOL 4J remains a comparative reference and is not selected for runtime adoption.
+
+The [dependency manifest](dependencies/graalcobol.json) pins upstream commit `87bf9c63f62eee5e5a639dac7135c4c70ed3d54c`; the [OBS integration contract and acceptance gates](docs/integrations/graalcobol.md) define the host boundary, exact decimal handling, differential validation and rollback requirements.
+
+**Reviewed status (2026-10-10):** upstream is architecture/design documentation, without an executable parser, runtime, adapters or execution tests. This integration registers a planned dependency; it does not install a working COBOL engine. Priority is P2 conditional and runtime activation is disabled until the documented gates pass.
+
+Rascal analysis and IR generation stay in engineering workflows. The first proposed OBS adapter supplies a pure calculation result and evidence from approved artifacts. Existing OBS lending, payment, authorization and reconciliation services retain their financial authority. CICS/DB2/JCL compatibility and Native Image support are not assumed.
 
 ---
 
@@ -708,6 +722,7 @@ flowchart TB
   REVIEW -.->|Recommendation only| POLICY
   LEDGER -.->|Scoped projections| DATA
   LEGACY["Conditional mainframe adapters"] -.-> API
+  GC["Planned GraalCOBOL calculation adapter"] -.->|Validated evidence only| POLICY
   DEFI["Independent digital-asset sandbox"] -.-> API
 ```
 
@@ -807,7 +822,8 @@ To keep the architecture maintainable:
 | OpenCEX | Digital Assets | Optional Research | Crypto exchange engine |
 | OpenZeppelin Contracts | Digital Assets | Optional Integration | Smart-contract components |
 | API Mediation Layer | Legacy | Strategic Integration | Mainframe REST gateway |
-| COBOL 4J | Legacy | Candidate | COBOL interoperability |
+| GraalCOBOL | Legacy | Planned Dependency | Rascal analysis, versioned IR and proposed Truffle runtime |
+| COBOL 4J | Legacy | Reference Only | Comparative COBOL/JVM material |
 | Cobrix | Legacy/Data | Strategic Integration | COBOL/Spark ingestion |
 | CICS/COBOL Cash Account | Legacy | Research Reference | Banking implementation reference |
 | Agentic COBOL Reverse Engineering | Legacy/AI | Research/Candidate | Legacy understanding |
@@ -821,7 +837,7 @@ To keep the architecture maintainable:
 
 ## 19.1 Dependency priority analysis
 
-**Planning review: 2026-10-10.** Priorities are architectural judgments for the documented lending/payment gateway and FTM lifecycle, not measured maturity rankings. No candidate is installed by this document. The table covers all 33 supplied entries and adds Apache Fineract because the supplied Mifos entry explicitly depends on it.
+**Planning review: 2026-10-10.** Priorities are architectural judgments for the documented lending/payment gateway and FTM lifecycle, not measured maturity rankings. No candidate is installed by this document. The table retains all 33 original entries as candidates or references, adds Apache Fineract as the explicit Mifos backend, and adds GraalCOBOL as the planned modernization dependency replacing COBOL 4J, which remains reference-only.
 
 ### Method and decision gates
 
@@ -870,7 +886,8 @@ Every adoption decision records owner, upstream URL, pinned version/commit, lice
 | Digital assets | OpenZeppelin Contracts | Smart-contract library | P3 conditional | Select the target-chain package. Solidity Contracts target Ethereum/EVM; do not assume native Solana compatibility. |
 | Legacy | API Mediation Layer (API ML) | Mainframe API gateway | P2 conditional | Promote to P1 if a required mainframe service exists; test identity propagation and API contract mapping. |
 | Legacy | Cobrix COBOL Data Source for Apache Spark | Batch ingestion library | P2 conditional | Validate copybook layouts, encoding, decimals and balance totals; not an online financial transaction gateway. |
-| Legacy | COBOL 4J | Compiler/runtime candidate | P3 / HOLD | Identify exact compiler and dialect; compilation alone does not establish CICS behavioral equivalence. |
+| Legacy | GraalCOBOL | Planned modernization dependency | P2 conditional; runtime inactive | Pinned in the dependency manifest; upstream is design-only. Require reproducible build, declared subset, host contract and differential/rollback evidence before activation. |
+| Legacy | COBOL 4J | Comparative reference only | P3 reference | Retained as background material; GraalCOBOL replaces it as the planned modernization dependency. No OBS runtime adoption is proposed. |
 | Legacy | CICS/COBOL Cash Account | Implementation reference | P3 / HOLD | Identify upstream source and semantics; use as migration/reference material until parity is demonstrated. |
 | Legacy | Agentic workflow for COBOL Reverse Engineering | Engineering approach, source unspecified | P2 conditional / HOLD | Identify tooling; extracted rules need human review, regression cases and financial reconciliation. |
 
@@ -912,6 +929,7 @@ The original classification and unspecified names come from the OBS baseline and
 - [FINOS CDM](https://github.com/finos/Common-Domain-Model): financial products, trades and lifecycle events; select mappings rather than asserting full lending-domain coverage.
 - [CALM AI Tools](https://calm.finos.org/working-with-calm/calm-ai-tools/): development assistance for CALM architecture modeling.
 - [Fluxnova BPM platform](https://github.com/finos/fluxnova-bpm-platform): BPMN workflow engine; distinguish the runtime platform from its AI working group.
+- [GraalCOBOL pinned design](https://github.com/sdk2035/GraalCOBOL/tree/87bf9c63f62eee5e5a639dac7135c4c70ed3d54c): proposed modernization dependency; OBS details are in the local integration contract.
 - [OpenZeppelin Solidity Contracts](https://docs.openzeppelin.com/contracts/5.x): Solidity contract library for Ethereum/EVM use; native Solana integration is not established by its inclusion.
 
 
@@ -998,8 +1016,9 @@ Establish identity, audit, contract versioning, durable state and the section 19
 
 - API Mediation Layer;
 - Cobrix;
-- COBOL analysis;
-- validated extraction of business rules.
+- GraalCOBOL dependency evaluation using its pinned manifest and declared subset;
+- COBOL 4J retained as comparative reference only;
+- validated extraction of business rules and differential/rollback evidence before activation.
 
 ## Phase 8 — Digital Assets
 
@@ -1085,7 +1104,7 @@ The original compendium remains categorized by responsibility. Select and valida
 | AI decision support | FinRobot, PIXIU and the original evaluation components | Extract documents and propose explainable financial features |
 | Workflow and preparation | Existing workflow/data candidates; added sdk2035/bonsai | Keep durable business state in OBS; use Bonsai for bounded reactive processing |
 | Semantic contracts | Canonical OBS schemas; BIAN/FINOS mappings where applicable | Map business invoices and agreements to financial capabilities |
-| Enterprise and legacy integration | Existing mainframe adapters plus JFXICP and JFXLEGACY2MODERN | Connect providers and business systems while preserving reconciliation |
+| Enterprise and legacy integration | Existing mainframe adapters, planned GraalCOBOL, JFXICP and JFXLEGACY2MODERN | Connect providers and business systems while preserving reconciliation |
 | Business channels | OHS, FMIS, ATS and added FTM | Submit scoped business requests and consume financial status |
 
 This table is an architectural mapping, not a new compatibility or licensing claim about the original components.
@@ -1508,6 +1527,15 @@ business_subsystems:
     operational_owner: ftm
     financial_gateway: jfxai4obs
     deposit_mechanism: product-and-provider-defined
+
+planned_dependencies:
+  - id: graalcobol
+    manifest: dependencies/graalcobol.json
+    repository: sdk2035/GraalCOBOL
+    revision: 87bf9c63f62eee5e5a639dac7135c4c70ed3d54c
+    role: reviewed-cobol-modernization-and-calculation-evidence
+    status: upstream-design-only
+    runtime_enabled: false
 
 engineering_subsystems:
   - repository: robotics-intelligent-systems/jfxicp
