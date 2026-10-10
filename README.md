@@ -33,6 +33,7 @@
 - [17. Recommended Logical Services](#17-recommended-logical-services)
 - [18. Integration Rules](#18-integration-rules)
 - [19. Open-Source Software Compendium — Architectural Classification](#19-open-source-software-compendium--architectural-classification)
+- [19.1 Dependency priority analysis](#191-dependency-priority-analysis)
 - [20. Recommended MVP](#20-recommended-mvp)
 - [21. Evolution Roadmap](#21-evolution-roadmap)
 - [22. Architectural Principle](#22-architectural-principle)
@@ -64,33 +65,17 @@ Instead, each project is assigned to a **building block** with a clearly defined
 
 The primary business path is:
 
-```text
-Customer / Banker / Analyst
-          |
-          v
-Digital Channels / Financial Desktop
-          |
-          v
-API + Identity + Consent
-          |
-          v
-Loan Origination / Loan Management
-          |
-          +-----------------------+
-          |                       |
-          v                       v
-Open Banking / Payments     Financial Engineering
-          |                       |
-          +-----------+-----------+
-                      |
-                      v
-             AI Decision Engine
-                      |
-                      v
-       Risk / Forecasting / Monitoring
-                      |
-                      v
-         Accounting / Settlement / Data
+```mermaid
+flowchart TD
+  CHANNEL["Customer, banker and analyst channels"] --> AUTH["API identity and purpose-bound consent"]
+  AUTH --> REQUEST["Canonical loan or payment request"]
+  REQUEST --> POLICY["Deterministic policy and required approval"]
+  DATA["Authorized banking data"] -.-> ANALYSIS["Financial scenarios and AI evidence"]
+  ANALYSIS -.-> POLICY
+  POLICY --> CORE["Selected lending engine and payment adapter"]
+  CORE --> PROVIDER["Bank or payment provider"]
+  PROVIDER --> VERIFY["Verify outcome and reconcile"]
+  VERIFY --> RECORD["Ledger, servicing and audit records"]
 ```
 
 The AI layer is therefore **embedded inside financial workflows** rather than operating as a generic standalone assistant.
@@ -99,66 +84,23 @@ The AI layer is therefore **embedded inside financial workflows** rather than op
 
 # 2. Building-Block Map
 
-```text
-┌───────────────────────────────────────────────────────────────────────┐
-│                     EXPERIENCE & DISTRIBUTION                         │
-│ Web / Mobile / FDC3 Financial Desktop / Banking UI / Analyst Console │
-└───────────────────────────────┬───────────────────────────────────────┘
-                                │
-                                v
-┌───────────────────────────────────────────────────────────────────────┐
-│                    API, IDENTITY & CONSENT                            │
-│ Open Bank Project | ACA-Py | PSD2/Saturn | API Gateway / API ML      │
-└───────────────────────────────┬───────────────────────────────────────┘
-                                │
-                                v
-┌───────────────────────────────────────────────────────────────────────┐
-│                     LENDING DOMAIN CORE                               │
-│ OpenCBS | Apache Fineract | Mifos X | Frappe Lending                 │
-│ Origination | Underwriting | Contracts | Schedules | Servicing       │
-│ Collections | Restructuring | Collateral | Portfolio                 │
-└───────────────────────────────┬───────────────────────────────────────┘
-                                │
-               ┌────────────────┼─────────────────┐
-               │                │                 │
-               v                v                 v
-┌───────────────────┐ ┌───────────────────┐ ┌──────────────────────────┐
-│ OPEN BANKING      │ │ PAYMENTS          │ │ FINANCIAL ENGINEERING    │
-│ OBP / PSD2        │ │ SEPA              │ │ BeforeIT.jl              │
-│ PyFinTS           │ │ Hyperswitch       │ │ Quant / simulation       │
-│ XS2A / OpenFinance│ │ Payment routing   │ │ Scenario forecasting     │
-└─────────┬─────────┘ └─────────┬─────────┘ └────────────┬─────────────┘
-          │                     │                        │
-          └──────────────┬──────┴───────────────┬────────┘
-                         │                      │
-                         v                      v
-              ┌─────────────────────┐  ┌────────────────────────────┐
-              │ AI DECISION ENGINE  │  │ FINANCIAL DOMAIN MODELS    │
-              │ FinRobot            │  │ FINOS CDM                  │
-              │ PIXIU               │  │ BIAN                       │
-              │ Responsible AI      │  │ Product / contract schemas │
-              │ Graph ML / LLM Eval │  │ Events / accounting data   │
-              └──────────┬──────────┘  └─────────────┬──────────────┘
-                         │                           │
-                         └──────────────┬────────────┘
-                                        v
-┌───────────────────────────────────────────────────────────────────────┐
-│                 DATA, WORKFLOW & GOVERNANCE                           │
-│ Enso Analytics | Fluxnova | Waltz | MLOps | Model Registry           │
-│ Feature Store | Audit | Observability | Explainability | Lineage      │
-└───────────────────────────────┬───────────────────────────────────────┘
-                                │
-          ┌─────────────────────┼────────────────────────┐
-          │                     │                        │
-          v                     v                        v
-┌───────────────────┐ ┌─────────────────────┐ ┌────────────────────────┐
-│ DIGITAL ASSETS    │ │ LEGACY BANKING      │ │ ENTERPRISE INTEGRATION │
-│ Solana            │ │ API Mediation Layer │ │ ERP / Accounting       │
-│ OpenCEX           │ │ COBOL 4J            │ │ Treasury / CRM / DWH   │
-│ OpenZeppelin      │ │ Cobrix              │ │ Regulatory Reporting   │
-│ optional DeFi     │ │ CICS/COBOL Cash A/C │ │ Event / API adapters   │
-└───────────────────┘ │ COBOL reverse eng.  │ └────────────────────────┘
-                      └─────────────────────┘
+```mermaid
+flowchart TB
+  A["A: Channels and optional FDC3"] --> B["B: API identity and consent"]
+  B --> C["C: Lending facade - one selected core"]
+  B --> E["E: Payment orchestration"]
+  C -->|Approved disbursement| E
+  D["D: Open banking adapters"] -->|Permissioned evidence| C
+  E --> EXT["External banks and providers"]
+  EXT --> REC["Verified reconciliation and ledger updates"]
+  REC --> C
+  F["F: Financial engineering"] -.-> G["G: AI evidence and decision review"]
+  G -.-> C
+  H["H: BIAN and selective CDM mappings"] -.-> C
+  I["I: Durable workflows and prepared data"] -.-> G
+  J["J: Architecture, audit and MLOps"] -.-> I
+  K["K: Optional digital-asset sandbox"] -.-> E
+  L["L: Conditional legacy adapters"] -.-> D
 ```
 
 ---
@@ -738,69 +680,35 @@ Open Models  Cloud AI      Commercial AI
 
 # 16. Consolidated Building-Block Architecture
 
-```text
-                         USERS
-          ┌──────────────┼───────────────┐
-          │              │               │
-      Customers       Bankers        Analysts
-          │              │               │
-          └──────────────┼───────────────┘
-                         v
-              EXPERIENCE / FDC3 / WEB
-                         |
-                         v
-              API + IDENTITY + CONSENT
-        Open Bank Project | ACA-Py | PSD2
-                         |
-                         v
-              CANONICAL FINANCIAL API
-                         |
-       ┌─────────────────┼──────────────────┐
-       │                 │                  │
-       v                 v                  v
- LOAN MANAGEMENT    OPEN BANKING        PAYMENTS
- OpenCBS            OBP / PSD2          SEPA
- Fineract/Mifos     PyFinTS             Hyperswitch
- Frappe Lending
-       │                 │                  │
-       └─────────────────┼──────────────────┘
-                         |
-                         v
-              FINANCIAL DOMAIN MODEL
-                  FINOS CDM + BIAN
-                         |
-            ┌────────────┼───────────────┐
-            │            │               │
-            v            v               v
- FINANCIAL ENGINEERING   AI ENGINE      WORKFLOW
- BeforeIT.jl             FinRobot       Fluxnova
- Simulation              PIXIU          Enso
- Forecasting              Graph ML
- Stress / Pricing         LLM Eval
-            │            │               │
-            └────────────┼───────────────┘
-                         |
-                         v
-             RISK / DECISION / POLICY
-                         |
-                         v
-                HUMAN APPROVAL GATE
-                         |
-                         v
-             SERVICING / COLLECTIONS
-                         |
-       ┌─────────────────┼─────────────────┐
-       │                 │                 │
-       v                 v                 v
- LEGACY BANKING      DIGITAL ASSETS   ENTERPRISE EA
- API ML / COBOL      Solana           Waltz
- Cobrix              OpenCEX
- COBOL4J             OpenZeppelin
-       │                 │                 │
-       └─────────────────┼─────────────────┘
-                         |
-                         v
-          DATA / AUDIT / OBSERVABILITY / MLOPS
+```mermaid
+flowchart TB
+  UI["Customer and operational channels"] --> API["Canonical OBS API, identity and consent"]
+  subgraph OBS["OBS transactional boundary"]
+    POLICY["Product policy and recorded approval"]
+    LOAN["Lending facade: Fineract OR Frappe candidate"]
+    PAY["Payment intents and provider adapters"]
+    REC["Verified reconciliation"]
+    LEDGER["Financial records and servicing"]
+    POLICY --> LOAN
+    POLICY --> PAY
+    LOAN -->|Approved disbursement intent| PAY
+    REC --> LEDGER
+    LEDGER -->|Repayment allocation| LOAN
+  end
+  API --> POLICY
+  PAY -->|Instruction| BANK["External bank or PSP"]
+  BANK -->|Provider outcome| REC
+  OB["Open banking adapter"] -->|Authorized account evidence| POLICY
+  subgraph SUPPORT["Decision support and engineering"]
+    DATA["Prepared data and validated scenarios"] --> AI["Optional AI evidence"]
+    AI --> REVIEW["Decision review"]
+    GOV["Audit, evaluation and MLOps"] -.-> AI
+    STD["BIAN mappings and selective CDM"] -.-> DATA
+  end
+  REVIEW -.->|Recommendation only| POLICY
+  LEDGER -.->|Scoped projections| DATA
+  LEGACY["Conditional mainframe adapters"] -.-> API
+  DEFI["Independent digital-asset sandbox"] -.-> API
 ```
 
 ---
@@ -911,26 +819,117 @@ To keep the architecture maintainable:
 
 ---
 
+## 19.1 Dependency priority analysis
+
+**Planning review: 2026-10-10.** Priorities are architectural judgments for the documented lending/payment gateway and FTM lifecycle, not measured maturity rankings. No candidate is installed by this document. The table covers all 33 supplied entries and adds Apache Fineract because the supplied Mifos entry explicitly depends on it.
+
+### Method and decision gates
+
+Rank by (1) necessity for the first complete loan/payment lifecycle, (2) relevance to the selected market and existing systems, (3) duplication of another candidate, and (4) integration/operational cost. Avoid numerical scores until versions, requirements and upstream evidence can be compared.
+
+- **P0 — Foundation:** required capability or first core-engine evaluation. A P0 candidate is not automatically an adopted dependency.
+- **P1 — First integration:** evaluate for the initial provider, bank, workflow or UI. Promote to P0 only when the chosen demonstrator requires it.
+- **P2 — Extension:** add after the transactional slice works, with a specific use case and acceptance evidence.
+- **P3 — Research/reference:** isolated evaluation; no baseline runtime commitment.
+- **HOLD:** a priority may be proposed, but adoption is blocked until the exact upstream project/package, license and supported interface are identified.
+
+Every adoption decision records owner, upstream URL, pinned version/commit, license and transitive notices, supported API, deployment cost, maintenance/security evidence, data permissions, acceptance results and rollback plan. The category distinguishes runtime services, optional UI, standards, engineering tools, capabilities and reference material.
+
+### Categorized candidate list
+
+| Category | Candidate | Kind | Priority | Reason and adoption condition |
+|---|---|---|---|---|
+| Lending | Apache Fineract (explicit Mifos backend) | Core service | P0 evaluation | Compare against Frappe using the same product and servicing cases; select one authoritative core. |
+| Lending | Frappe Lending | Alternative core service | P0 evaluation | Evaluate ERP fit, allocation and servicing behavior; do not deploy a second loan ledger by default. |
+| Lending | OpenCBS Loan Origination Solution | Origination candidate | P2 / HOLD | Add only for a demonstrated origination gap; identify the intended edition, source and interface first. |
+| Lending | CashMan Financial Banking System | Core reference | P3 / HOLD | Exact upstream unspecified; no basis to replace the selected core. |
+| Experience | Mifos X Web App | Optional UI | P1 conditional | Prioritize if Fineract is selected; confirm matching backend/API versions and operator permissions. |
+| Experience | FDC3 | Interoperability standard | P2 | Useful for a multi-application financial desktop; unnecessary for one web channel. |
+| Experience | Hibiscus | Banking client/reference | P3 | Evaluate client workflows rather than treating a desktop application as the OBS backend. |
+| Open banking | Open Bank Project | API platform/adapter candidate | P1 | Prioritize permissioned account access; demonstrate consent lifecycle and bank-specific sandbox compatibility. |
+| Open banking | Swedbank PSD2/Saturn Interface | Bank-specific adapter/reference | P1 conditional / HOLD | Relevant only for a Swedbank target; establish exact API, onboarding and intended Saturn source. |
+| Open banking | PyFinTS | Protocol library | P2 conditional | Promote to P1 when a selected bank requires FinTS; verify bank protocol/authentication support. |
+| Payments | SEPA Credit and Debit Transfer tooling | Rail capability, package unspecified | P1 conditional / HOLD | Select concrete SCT/SDD tooling and provider contracts for a SEPA deployment; test mandates, returns and reconciliation. |
+| Payments | Hyperswitch | Orchestration service | P1 | Compare supported connectors with the selected provider; routing alone does not prove bank settlement or SEPA support. |
+| Identity | ACA-Py | Optional credential service | P2 | Adopt for a proven decentralized credential use case; identity/consent capability is P0 regardless of this choice. |
+| Governance and AI | Responsible AI, MLOps, graph ML and LLM evaluation | Capability bundle, not one dependency | P0 controls; P2 graph ML | Establish evaluation, lineage, access and rollback before AI use; select packages individually. Graph ML is optional. |
+| Governance and AI | Santander AI Open Source | Research portfolio | P2 / HOLD | Select named projects and validate task fit, licenses and reproducibility; an organization is not an installable package. |
+| Governance and AI | CALM AI Tools | Architecture development tooling | P1 engineering | Use for architecture/schema assistance where CALM is adopted; not an underwriting or runtime policy engine. |
+| Governance and AI | FinRobot | Financial analysis agent candidate | P2 | Pilot evidence extraction/analysis with scoped data and evaluation; generated results cannot approve transactions. |
+| Governance and AI | PIXIU | Financial LLM research/evaluation | P2 | Compare on OBS-specific tasks and data; generic financial benchmarks do not validate credit decisions. |
+| Governance and AI | Claude for Financial Services | Commercial external reference | P3 | Optional provider evaluation; document contract, data handling and replaceability rather than listing as OSS. |
+| Financial engineering | BeforeIT.jl | Macroeconomic simulation package | P2 research | Validate calibration and reproducibility; borrower-level credit/pricing applications require separate validation. |
+| Standards | BIAN | Service-domain reference | P1 design | Map a small set of loan/payment responsibilities early; no runtime dependency is implied. |
+| Standards | FINOS Common Domain Model | Financial product/trade model | P2 selective | Evaluate supported product/event mappings; it is not assumed to be a complete retail-loan accounting model. |
+| Workflow and data | Fluxnova | BPMN workflow service candidate | P1 | Use if durable human-task workflows justify a separate engine; test retries, timers and recovery. |
+| Workflow and data | Enso Analytics | Data preparation tooling | P2 | Add for traceable analyst pipelines after canonical data contracts are stable. |
+| Enterprise architecture | Waltz | Architecture inventory platform | P2 | Useful as integrations grow; inventory and ownership records are needed earlier without requiring this platform. |
+| Runtime research | jank | Language/runtime | P3 | No demonstrated OBS integration need; adding a language increases build and operational obligations. |
+| Digital assets | Decentralized banking system on Solana (SOLs) | Unspecified application/platform reference | P3 / HOLD | Identify the actual banking project; Solana and its SOL asset do not identify a deployable banking system. |
+| Digital assets | OpenCEX | Exchange-engine candidate | P3 / HOLD | Pin exact repository and validate custody/order/settlement scope; exchange execution is outside the lending MVP. |
+| Digital assets | OpenZeppelin Contracts | Smart-contract library | P3 conditional | Select the target-chain package. Solidity Contracts target Ethereum/EVM; do not assume native Solana compatibility. |
+| Legacy | API Mediation Layer (API ML) | Mainframe API gateway | P2 conditional | Promote to P1 if a required mainframe service exists; test identity propagation and API contract mapping. |
+| Legacy | Cobrix COBOL Data Source for Apache Spark | Batch ingestion library | P2 conditional | Validate copybook layouts, encoding, decimals and balance totals; not an online financial transaction gateway. |
+| Legacy | COBOL 4J | Compiler/runtime candidate | P3 / HOLD | Identify exact compiler and dialect; compilation alone does not establish CICS behavioral equivalence. |
+| Legacy | CICS/COBOL Cash Account | Implementation reference | P3 / HOLD | Identify upstream source and semantics; use as migration/reference material until parity is demonstrated. |
+| Legacy | Agentic workflow for COBOL Reverse Engineering | Engineering approach, source unspecified | P2 conditional / HOLD | Identify tooling; extracted rules need human review, regression cases and financial reconciliation. |
+
+### Recommended sequence and acceptance evidence
+
+| Gate | Dependency decision | Required evidence |
+|---|---|---|
+| G0: Scope and identification | Select product, market, provider and one core; resolve relevant HOLD items | Concrete upstream identities, contract boundaries, component inventory and decision owner. |
+| G1: Core vertical slice | Fineract OR Frappe; optional matching Mifos UI | Application, accepted terms, schedule, servicing, repayment allocation, reversal and balance comparison pass using synthetic data. |
+| G2: Payments and bank evidence | One provider adapter; evaluate Hyperswitch/OBP and market-specific SEPA, PSD2 or FinTS | Duplicate intents, unknown outcomes, delayed/out-of-order events, consent revocation and reconciliation are handled without duplicate posting. |
+| G3: Operational workflow | Evaluate Fluxnova and CALM engineering support; baseline audit already active | Durable approvals, timeout/restart recovery, tenant isolation and traceable state transitions. |
+| G4: Analytical extensions | BeforeIT.jl, FinRobot, PIXIU, selected Santander projects and Enso | Documented datasets, task metrics, reproducible results, scoped access, reviewer ownership and rollback. |
+| G5: Conditional domains | Legacy adapters, FDC3, CDM/Waltz or independent digital-asset sandbox | A demonstrated business requirement plus integration-specific parity, permission and reconciliation tests. |
+
+For the FTM demonstrator, prioritize rental charge, separate deposit, handover, return and refund. Add financed sale and rent-to-own after allocations and compensation are verified. Governance controls begin at G0; optional governance platforms can follow later. Mainframe integrations move forward when inherited accounts require them. SEPA/Swedbank/FinTS priority depends on the chosen bank and market; do not assume a European deployment.
+
+```mermaid
+flowchart TD
+  SCOPE["G0: Product, market and concrete upstreams"] --> CORE["G1: One lending core and canonical contracts"]
+  CORE --> PAY["G2: Provider sandbox and reconciliation"]
+  PAY --> WORK["G3: Durable workflow and operational evidence"]
+  WORK --> ANALYTICS["G4: Evaluated analytical extensions"]
+  WORK --> OPTIONAL["G5: Requirement-driven integrations"]
+  CONTROLS["Identity, audit, versioning and evaluation gates"] -.-> SCOPE
+  CONTROLS -.-> CORE
+  CONTROLS -.-> PAY
+  CONTROLS -.-> ANALYTICS
+  HOLD["Unidentified package or incompatible interface"] --> IDENTIFY["Resolve identity and compatibility before adoption"]
+  IDENTIFY --> SCOPE
+```
+
+### Sources and limits of review
+
+The original classification and unspecified names come from the OBS baseline and supplied list. Priority and sequencing are proposed judgments. Selected upstream sources were reviewed on 2026-10-10; this is not a security, license or production-readiness audit of all candidates.
+
+- [Apache Fineract](https://github.com/apache/fineract) and [Frappe Lending](https://github.com/frappe/lending): concrete core candidates for comparative evaluation.
+- [Hyperswitch](https://github.com/juspay/hyperswitch): composable payment platform; selected connector behavior must be tested separately.
+- [BeforeIT.jl](https://github.com/bancaditalia/BeforeIT.jl): agent-based macroeconomic modeling; OBS borrower-level uses remain research proposals.
+- [FINOS CDM](https://github.com/finos/Common-Domain-Model): financial products, trades and lifecycle events; select mappings rather than asserting full lending-domain coverage.
+- [CALM AI Tools](https://calm.finos.org/working-with-calm/calm-ai-tools/): development assistance for CALM architecture modeling.
+- [Fluxnova BPM platform](https://github.com/finos/fluxnova-bpm-platform): BPMN workflow engine; distinguish the runtime platform from its AI working group.
+- [OpenZeppelin Solidity Contracts](https://docs.openzeppelin.com/contracts/5.x): Solidity contract library for Ethereum/EVM use; native Solana integration is not established by its inclusion.
+
+
+---
+
 # 20. Recommended MVP
 
 The first implementation should **not** attempt to integrate every project.
 
 A focused MVP:
 
-```text
-Frappe Lending OR Apache Fineract
-           |
-Open Bank Project
-           |
-Hyperswitch / SEPA adapter
-           |
-PostgreSQL
-           |
-Financial Engineering Service
-           |
-FinRobot / Financial LLM Experiment
-           |
-Responsible AI Evaluation
+```mermaid
+flowchart LR
+  UI["One operational channel"] --> API["Canonical API and authorization"]
+  API --> CORE["One lending engine"]
+  CORE --> PAY["One provider sandbox adapter"]
+  PAY --> REC["Reconciliation and repayment allocation"]
+  REC --> AUDIT["Persistent records and audit"]
 ```
 
 ### MVP Capabilities
@@ -941,13 +940,11 @@ Responsible AI Evaluation
 - repayment schedules;
 - disbursement;
 - repayments;
-- open-banking transaction ingestion;
-- payment orchestration;
-- basic cash-flow features;
-- AI-assisted application/document analysis;
-- portfolio forecasting;
-- human approval;
-- model/audit trace.
+- provider submission and verified reconciliation;
+- recorded human approval where required;
+- idempotency, tenant isolation and audit trace.
+
+After the transactional acceptance gates pass, add permissioned open-banking ingestion, cash-flow features, evaluated document analysis and portfolio forecasting as separate extensions.
 
 ---
 
@@ -955,16 +952,18 @@ Responsible AI Evaluation
 
 ## Phase 1 — Loan Management Foundation
 
-- evaluate OpenCBS, Fineract and Frappe Lending;
+Establish identity, audit, contract versioning, durable state and the section 19.1 acceptance gates from the start. These are cross-cutting requirements, even where optional governance tools are evaluated later.
+
+- compare Fineract and Frappe Lending; evaluate OpenCBS later if origination gaps remain;
 - define canonical Loan API;
 - implement customer, application, contract and repayment lifecycle.
 
 ## Phase 2 — Open Banking & Payments
 
-- Open Bank Project gateway;
-- PSD2 / FinTS adapters;
-- SEPA;
-- Hyperswitch.
+- evaluate Open Bank Project for permissioned bank access;
+- select PSD2 / FinTS adapters only for the target bank;
+- select SEPA tooling only for the target market;
+- evaluate Hyperswitch against the selected provider connectors.
 
 ## Phase 3 — Financial Engineering
 
@@ -988,12 +987,12 @@ Responsible AI Evaluation
 - FINOS CDM mapping;
 - FDC3 desktop interoperability.
 
-## Phase 6 — Workflow & Governance
+## Phase 6 — Expanded Workflow & Governance
 
 - Fluxnova;
 - Enso Analytics;
 - Waltz;
-- Responsible AI and MLOps controls.
+- Expand Responsible AI and MLOps tooling; baseline controls apply before the first AI pilot.
 
 ## Phase 7 — Legacy Modernization
 
@@ -1004,7 +1003,7 @@ Responsible AI Evaluation
 
 ## Phase 8 — Digital Assets
 
-- optional Solana/OpenCEX/OpenZeppelin sandbox;
+- separate optional Solana banking, OpenCEX exchange and chain-compatible contract-library experiments;
 - independent settlement/reconciliation gateway;
 - compliance and legal review before any operational use.
 
@@ -1094,40 +1093,50 @@ This table is an architectural mapping, not a new compatibility or licensing cla
 ## 23.4 Consolidated architecture
 
 ```mermaid
-flowchart TD
-  subgraph BUS["Business subsystems"]
-    direction TB
-    FTM["JFXAI4FTM rental and sales"]
-    OHS["JFXAI4OHS B2B"]
-    FMIS["JFXFMIS agrifinance"]
-    ATS["JFXAI4ATS risk projections"]
+flowchart TB
+  subgraph BUSINESS["Business record owners"]
+    FTM["FTM rental, sale and rent-to-own"]
+    OHS["OHS B2B commerce"]
+    FMIS["FMIS agrifinance"]
+    ATS["ATS risk projections"]
   end
-  FTM --> INT["JFXICP adapters"]
-  OHS --> INT
-  FMIS --> INT
-  ATS --> INT
-  INT --> GW["JFXAI4OBS gateway and consent"]
-  GW --> PAY["Payment orchestration"]
-  GW --> CREDIT["Lending and credit policy"]
-  CREDIT -->|Approved disbursement| PAY
-  PAY --> BANK["Banks and payment providers"]
-  BANK --> REC["OBS reconciliation and ledgers"]
-  REC -->|Financial status| INT
+  FTM -->|Intent| INT["JFXICP versioned adapters"]
+  OHS -->|Intent| INT
+  FMIS -->|Intent| INT
+  ATS -.->|Evidence| INT
+  subgraph OBS["OBS financial boundary"]
+    GW["Gateway: identity and consent"] --> POLICY["Validation, policy and recorded approval"]
+    POLICY --> PAY["Payment orchestration"]
+    POLICY --> CREDIT["Selected lending engine"]
+    CREDIT -->|Approved disbursement| PAY
+    REC["Verified outcome and reconciliation"] --> LEDGER["OBS financial records"]
+    LEDGER -->|Repayment allocation| CREDIT
+    LEDGER --> EVENTS["Durable status events"]
+  end
+  INT --> GW
+  PAY -->|Financial instruction| BANK["External bank or payment provider"]
+  BANK -->|Signed event or verified query| REC
+  EVENTS -->|Scoped financial status| INT
+  INT -->|Status projection| FTM
+  INT -->|Status projection| OHS
+  INT -->|Status projection| FMIS
+  INT -.->|Authorized projection| ATS
 ```
 
 Engineering and reactive processing support the OBS services through separate interfaces:
 
 ```mermaid
-flowchart TD
-  LCDP["JFXLCDP requirements"] --> REVIEW["Reviewed contracts and policies"]
-  LEG["JFXLEGACY2MODERN mappings"] --> REVIEW
-  REVIEW --> SERVICES["OBS services and JFXICP adapters"]
-  SERVICES --> FEED["Authorized event projections"]
-  FEED --> BON["sdk2035/bonsai reactive graphs"]
-  BON --> SCEN["Financial scenario service"]
-  SCEN --> EVID["Metrics and evidence"]
-  EVID --> DEC["OBS decision review"]
-  DEC --> SERVICES
+flowchart TB
+  LCDP["JFXLCDP specifications"] --> CONTRACT["Reviewed versioned contracts"]
+  LEGACY["Reviewed legacy mappings"] --> CONTRACT
+  CONTRACT --> RELEASE["Validated service and adapter release"]
+  RELEASE --> SERVICES["OBS services"]
+  SERVICES -.->|Scoped projections| FEED["Authorized event feed"]
+  FEED -.-> BONSAI["Bonsai reactive graphs"]
+  BONSAI -.-> SCENARIO["Validated financial scenario service"]
+  SCENARIO -.-> EVIDENCE["Versioned metrics and evidence"]
+  EVIDENCE -.-> REVIEW["OBS policy and authorized reviewer"]
+  REVIEW -->|Recorded decision| SERVICES
 ```
 
 The scenario service implements financial calculations. Bonsai coordinates input streams and results; it is not itself a lending engine or a financial model.
@@ -1255,21 +1264,25 @@ Customer option exercise creates an approved buyout obligation. After OBS confir
 
 ```mermaid
 flowchart TD
-  QUOTE["FTM asset quote"] --> MODE{"Commercial mode"}
-  MODE -->|Rental| BOOK["Reservation and rental agreement"]
+  QUOTE["Versioned FTM asset quote"] --> MODE{"Commercial mode"}
+  MODE -->|Rental| RENT["Reservation and rental terms"]
   MODE -->|Sale| SALE["Sale agreement"]
   MODE -->|Rent to own| OPTION["Rental and purchase-option terms"]
-  BOOK --> OBS["OBS authorization and policy"]
-  SALE --> OBS
-  OPTION --> OBS
-  OBS --> FUNDS{"Funding path"}
-  FUNDS -->|Direct payment| PAY["OBS payment intent"]
-  FUNDS -->|Financing| LOAN["OBS credit review and acceptance"]
-  LOAN --> PAY
-  PAY --> RESULT{"Verified financial result"}
-  RESULT -->|Approved release condition| HAND["FTM handover or transfer workflow"]
-  RESULT -->|Unresolved or failed| REVIEW["Review, reconcile or cancel"]
-  HAND --> LIFE["Return, servicing or option exercise"]
+  RENT --> AUTH["OBS authorization and product-policy review"]
+  SALE --> AUTH
+  OPTION --> AUTH
+  AUTH --> FUND{"Funding path"}
+  FUND -->|Direct collection| INTENT["OBS payment intent"]
+  FUND -->|Financing| CREDIT["Credit review and accepted loan offer"]
+  CREDIT -->|Approved disbursement| INTENT
+  INTENT --> PROVIDER["Submit through provider adapter"]
+  PROVIDER --> VERIFY["Verify provider outcome and reconcile"]
+  VERIFY --> STATUS{"Financial release condition met?"}
+  STATUS -->|Yes| HANDOVER["Authorized FTM handover or title workflow"]
+  STATUS -->|Pending or unknown| PENDING["Hold release and query or reconcile"]
+  PENDING --> VERIFY
+  STATUS -->|Failed or disputed| CASE["Review, compensation or cancellation"]
+  HANDOVER --> LIFE["Servicing, return or option exercise"]
 ```
 
 Integration examples:
@@ -1526,7 +1539,7 @@ This manifest describes intended configuration. It is not an executable installe
 
 ## 23.16 Sources and review notes
 
-**Document baseline:** the supplied README(2).md, containing OBS sections 1–22, is preserved below the added table of contents and above this extension.
+**Document baseline:** OBS sections 1–23 were reviewed from repository commit `c64ec005a7d1f379da04095c9d6243f21df6539b`. The Mermaid views and dependency priorities were revised on 2026-10-10; existing contracts and subsystem scope remain the baseline.
 
 **Reviewed FTM source:** README blob b0ab534075fa356b7dbc1af8743aa86f0968a97b, retrieved on 2026-09-14 through the [FTM repository README](https://github.com/robotics-intelligent-systems/jfxai4ftm/blob/main/README.md). This is a content-blob identifier, not a pinned repository commit.
 
