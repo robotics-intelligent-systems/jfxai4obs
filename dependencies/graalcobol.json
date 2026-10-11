@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "dependency_id": "graalcobol",
+  "repository": "https://github.com/sdk2035/GraalCOBOL",
+  "revision": "87bf9c63f62eee5e5a639dac7135c4c70ed3d54c",
+  "reviewed_on": "2026-10-10",
+  "category": "legacy-modernization",
+  "relationship": "planned-architecture-dependency",
+  "priority": "P2-conditional",
+  "upstream_status": "design-only-no-executable-runtime",
+  "runtime_enabled": false,
+  "installation": null,
+  "artifact_coordinates": null,
+  "license_status": "requires-verification-before-code-adoption",
+  "contract": "docs/integrations/graalcobol.md",
+  "activation_gates": [
+    "upstream-reproducible-build-and-license-review",
+    "declared-dialect-and-supported-capabilities",
+    "versioned-ir-and-host-contract",
+    "exact-decimal-differential-validation",
+    "isolated-shadow-pilot-and-rollback"
+  ]
+}
